@@ -1,0 +1,24 @@
+{
+  "name": "fanout",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node test/perf.js",
+    "test": ""
+  },
+  "author": "Alex Pereverzyev",
+  "license": "MIT",
+  "repository": {
+    "url": "https://github.com/AlexPereverzyev/fanout"
+  },
+  "dependencies": {
+    "axios": "^0.19.2",
+    "express": "^4.17.1",
+    "got": "^11.0.3",
+    "needle": "^2.4.1",
+    "node-fetch": "^2.6.0",
+    "request": "^2.88.2",
+    "request-promise-native": "^1.0.8"
+  }
+}
