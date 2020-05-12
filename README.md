@@ -3,6 +3,12 @@
 
 Send HTTP request to multiple endpoints at once with minimal overhead using the thin wrapper around Node.js HTTP API.
 
+## Installation
+
+```
+npm install fast-fanout
+```
+
 ## Usage
 
 Fanout provides flexible API to send request batches efficiently.
@@ -50,7 +56,6 @@ TBD
 
 ## TODO
 
-- refactor perf test and dependencies
-- add tests and coverage
+- add tests and coverage - in progress
 - update README (description, examples, pros and cons)
 - add comments to code

@@ -1,11 +1,10 @@
 {
-  "name": "fanout",
+  "name": "fast-fanout",
   "version": "0.1.0",
   "description": "Send HTTP request to multiple endpoints at once with minimal overhead!",
   "main": "index.js",
   "scripts": {
-    "start": "",
-    "test": ""
+    "test": "nyc mocha"
   },
   "author": "Alex Pereverzyev",
   "license": "MIT",
@@ -24,5 +23,11 @@
     "promise",
     "node"
   ],
-  "dependencies": {}
+  "dependencies": {},
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^7.1.2",
+    "nyc": "^15.0.1",
+    "simdummy": "^0.1.3"
+  }
 }
