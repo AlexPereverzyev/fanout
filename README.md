@@ -52,10 +52,3 @@ TBD
 ### Callbacks
 
 TBD
-
-
-## TODO
-
-- add tests and coverage - in progress
-- update README (description, examples, pros and cons)
-- add comments to code
