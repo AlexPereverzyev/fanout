@@ -5,7 +5,7 @@ const fanout = require('../')
 
 describe('fanout', () => {
     it('should override common headers when endpoint-specific headers are specified', async () => {
-        await serverReady(async (server, port) => {
+        await serverReady(async (port) => {
             const name = 'user-agent'
             const common = {
                 [name]: 'general',
@@ -31,12 +31,10 @@ describe('fanout', () => {
     })
 
     it('should override common body when endpoint-specific body is specified', async () => {
-        await serverReady(async (server, port) => {
-            server.on('request', (req, res) => req.pipe(res))
-
+        await serverReady(async (port) => {
             const body = 'general'
             const options = {
-                url: `http://localhost:${port}/?l=10`,
+                url: `http://localhost:${port}/?l=10&eb=1`,
                 body: 'specific',
             }
 
@@ -54,13 +52,11 @@ describe('fanout', () => {
     })
 
     it('should pipe request body when its readable stream', async () => {
-        await serverReady(async (server, port) => {
-            server.on('request', (req, res) => req.pipe(res))
-
+        await serverReady(async (port) => {
             const payload = 'payload'
             const options = {
                 method: 'POST',
-                url: `http://localhost:${port}/?l=10`,
+                url: `http://localhost:${port}/?l=10&eb=1`,
                 body: new PassThrough(),
             }
             options.body.push(payload)
@@ -80,7 +76,7 @@ describe('fanout', () => {
     })
 
     it('should set content length header when body is specified', async () => {
-        await serverReady(async (server, port) => {
+        await serverReady(async (port) => {
             const payload = 'payload'
             const options = {
                 url: `http://localhost:${port}/?l=10&eh=1`,
@@ -99,8 +95,22 @@ describe('fanout', () => {
         })
     })
 
+    it('should reject when body format is unsupported', async () => {
+        const options = {
+            url: `http://localhost/?l=10`,
+        }
+
+        let p = null
+        try {
+            p = fanout([options], 1).next()
+        } catch (e) {
+            expect(e).is.not.null
+        }
+        expect(p).is.null
+    })
+
     it('should set content type and length header when body is JSON', async () => {
-        await serverReady(async (server, port) => {
+        await serverReady(async (port) => {
             const options = {
                 url: `http://localhost:${port}/?l=10&eh=1`,
                 body: { json: true },
@@ -121,9 +131,9 @@ describe('fanout', () => {
     })
 
     it('should use custom DNS lookup when provided', async () => {
-        await serverReady(async (server, port) => {
+        await serverReady(async (port) => {
             const options = {
-                url: `http://localhost:${port}/?l=10&eh=1`,
+                url: `http://localhost:${port}/?l=10`,
             }
 
             const lookup = (hostname, opts, callback) => {
@@ -140,9 +150,8 @@ describe('fanout', () => {
         })
     })
 
-
     it('should not reject when response status is not in 200s', async () => {
-        await serverReady(async (server, port) => {
+        await serverReady(async (port) => {
             const options = {
                 url: `http://localhost:${port}/?l=10&s=400`,
             }
@@ -156,7 +165,7 @@ describe('fanout', () => {
     })
 
     it('should reject when timeout is exceeded', async () => {
-        await serverReady(async (server, port) => {
+        await serverReady(async (port) => {
             const options = {
                 url: `http://localhost:${port}/?l=100`,
                 timeout: 10,
@@ -169,26 +178,25 @@ describe('fanout', () => {
     })
 
     it('should reject when connection is dropped', async () => {
-        await serverReady(async (server, port) => {
+        await serverReady(async (port) => {
             const options = {
                 url: `http://localhost:${port}/?l=100&d=1`,
             }
 
             for (let response of fanout([options])) {
-                return expect(response).to.eventually.be.rejectedWith('socket hang up')
+                return expect(response).to.eventually.be.rejected
             }
         })
     })
 
     it('should reject when Unix socket not exists', async () => {
-        const socketPath = '/tmp/missing_unix.socket'
         const options = {
             url: `http://localhost?l=10`,
-            socketPath: socketPath
+            socketPath: '/tmp/missing_unix.socket'
         }
 
         for (let response of fanout([options])) {
-            return expect(response).to.eventually.be.rejectedWith('connect ENOENT ' + socketPath)
+            return expect(response).to.eventually.be.rejected
         }
     })
 
@@ -198,16 +206,14 @@ describe('fanout', () => {
         }
 
         for (let response of fanout([options])) {
-            return expect(response).to.eventually.be.rejectedWith('getaddrinfo ENOTFOUND missing missing:443')
+            return expect(response).to.eventually.be.rejected
         }
     })
 
     it('should reject responses only when timeout expired', async () => {
-        await serverReady(async (server, port) => {
-            server.on('request', (req, res) => server.calls = (server.calls || 0) + 1)
-
+        await serverReady(async (port, stats) => {
             const timeout = 250
-            const latencies = [100, 200, 300, 400, 500].reverse()
+            const latencies = [100, 200, 260, 300, 350].reverse()
             const options = latencies.map(l => {
                 return {
                     url: `http://localhost:${port}/?l=${l}`,
@@ -228,15 +234,13 @@ describe('fanout', () => {
                 }
             }
 
-            expect(server.calls).to.equal(options.length)
+            expect(stats.calls).to.equal(options.length)
             expect(responses).lengthOf(latencies.filter(l => l < timeout).length)
         })
     })
 
     it('should recieve the same number of responses when there is more than one endpoint', async () => {
-        await serverReady(async (server, port) => {
-            server.on('request', (req, res) => server.calls = (server.calls || 0) + 1)
-
+        await serverReady(async (port, stats) => {
             const options = [
                 `http://localhost:${port}/?l=100`,
                 `http://localhost:${port}/?l=100`,
@@ -262,17 +266,17 @@ describe('fanout', () => {
                 responses.push(res)
             }
 
-            expect(server.calls).to.equal(options.length)
+            expect(stats.calls).to.equal(options.length)
             expect(responses.length).to.equal(options.length)
         })
     })
 
     it('should resolve faster response first when there are slower ones', async () => {
-        await serverReady(async (server, port) => {
+        await serverReady(async (port) => {
             const options = [
-                `http://localhost:${port}/?l=200`,
+                `http://localhost:${port}/?l=150`,
                 `http://localhost:${port}/?l=100`,
-                `http://localhost:${port}/?l=300`,
+                `http://localhost:${port}/?l=200`,
             ]
                 .map(endpoint => {
                     return {
@@ -288,6 +292,10 @@ describe('fanout', () => {
                 expect(res.statusCode).to.equal(200)
 
                 responses.push(res)
+
+                const body = await res.text()
+
+                expect(body).is.null
             }
 
             expect(responses.map(r => r.req.path)).to.be.eql(
@@ -296,7 +304,7 @@ describe('fanout', () => {
     })
 
     it('should return the same formatted response body when its read more than once', async () => {
-        await serverReady(async (server, port) => {
+        await serverReady(async (port) => {
             for (let response of fanout([{ url: `http://localhost:${port}/?l=100&eh=1` }])) {
                 const res = await response
 
@@ -327,7 +335,7 @@ describe('fanout', () => {
     })
 
     it('should resolve fastest response first when responses are raced', async () => {
-        await serverReady(async (server, port) => {
+        await serverReady(async (port) => {
             const options = [
                 `http://localhost:${port}/?l=300`,
                 `http://localhost:${port}/?l=100`,
@@ -347,11 +355,11 @@ describe('fanout', () => {
     })
 
     it('should resolve responses in order when they are raced', async () => {
-        await serverReady(async (server, port) => {
+        await serverReady(async (port) => {
             const options = [
-                `http://localhost:${port}/?l=300`,
-                `http://localhost:${port}/?l=100`,
                 `http://localhost:${port}/?l=200`,
+                `http://localhost:${port}/?l=100`,
+                `http://localhost:${port}/?l=150`,
             ]
                 .map(endpoint => {
                     return {
@@ -376,7 +384,7 @@ describe('fanout', () => {
     })
 
     it('should call back with each response when call back is provided', (done) => {
-        serverReady(async (server, port, done) => {
+        serverReady(async (port, _, __, done) => {
             const options = [
                 `http://localhost:${port}/?l=10`,
                 `http://localhost:${port}/?l=10`,
@@ -399,7 +407,7 @@ describe('fanout', () => {
     })
 
     it('should read response body when call back is provided', (done) => {
-        serverReady(async (server, port, done) => {
+        serverReady(async (port, _, __, done) => {
             const options = [
                 `http://localhost:${port}/?l=10&eh=1`,
                 `http://localhost:${port}/?l=10&eh=1`,
@@ -436,7 +444,7 @@ describe('fanout', () => {
     })
 
     it('should call back with error when response timeout exceeded', (done) => {
-        serverReady(async (server, port, done) => {
+        serverReady(async (port, _, __, done) => {
             const options = [
                 `http://localhost:${port}/?l=200`,
             ]
@@ -455,6 +463,22 @@ describe('fanout', () => {
 
                 if (options.length === ++count) done()
             })
+        }, done)
+    })
+
+    it('should return generator when callback is not specified', (done) => {
+        serverReady(async (port, _, __, done) => {
+            const options = {
+                url: `http://localhost:${port}/`,
+            }
+
+            const resultPromise = fanout([options])
+
+            expect(resultPromise).is.not.null
+
+            const resultCallback = fanout([options], null, null, null, () => done())
+
+            expect(resultCallback).is.undefined
         }, done)
     })
 })

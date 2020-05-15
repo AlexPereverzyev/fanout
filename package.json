@@ -4,7 +4,8 @@
   "description": "Send HTTP request to multiple endpoints at once with minimal overhead!",
   "main": "index.js",
   "scripts": {
-    "test": "nyc mocha"
+    "test": "mocha",
+    "cover": "nyc mocha"
   },
   "author": "Alex Pereverzyev",
   "license": "MIT",
@@ -23,12 +24,13 @@
     "promise",
     "node"
   ],
-  "dependencies": {},
+  "dependencies": {
+    "simdummy": "^0.1.4"
+  },
   "devDependencies": {
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "mocha": "^7.1.2",
-    "nyc": "^15.0.1",
-    "simdummy": "^0.1.3"
+    "nyc": "^15.0.1"
   }
 }
