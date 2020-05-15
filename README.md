@@ -1,6 +1,8 @@
 
 # fanout
 
+[![Coverage Status](https://coveralls.io/repos/github/AlexPereverzyev/fanout/badge.svg?branch=master)](https://coveralls.io/github/AlexPereverzyev/fanout?branch=master)
+
 Send HTTP request to multiple endpoints at once with minimal overhead using the thin wrapper around Node.js HTTP API.
 
 ## Installation
