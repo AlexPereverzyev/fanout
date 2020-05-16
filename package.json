@@ -1,11 +1,10 @@
 {
   "name": "fast-fanout",
   "version": "0.1.0",
-  "description": "Send HTTP request to multiple endpoints at once with minimal overhead!",
+  "description": "Send HTTP request to multiple endpoints at once with minimal overhead",
   "main": "index.js",
   "scripts": {
-    "test": "mocha",
-    "cover": "nyc mocha",
+    "test": "nyc mocha",
     "report": "nyc mocha && nyc report --reporter=text-lcov | coveralls"
   },
   "author": "Alex Pereverzyev",

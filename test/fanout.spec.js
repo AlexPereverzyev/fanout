@@ -212,8 +212,8 @@ describe('fanout', () => {
 
     it('should reject responses only when timeout expired', async () => {
         await serverReady(async (port, stats) => {
-            const timeout = 250
-            const latencies = [100, 200, 260, 300, 350].reverse()
+            const timeout = 80
+            const latencies = [25, 50, 75, 100, 125].reverse()
             const options = latencies.map(l => {
                 return {
                     url: `http://localhost:${port}/?l=${l}`,
@@ -242,9 +242,9 @@ describe('fanout', () => {
     it('should recieve the same number of responses when there is more than one endpoint', async () => {
         await serverReady(async (port, stats) => {
             const options = [
-                `http://localhost:${port}/?l=100`,
-                `http://localhost:${port}/?l=100`,
-                `http://localhost:${port}/?l=100`,
+                `http://localhost:${port}/?l=10`,
+                `http://localhost:${port}/?l=10`,
+                `http://localhost:${port}/?l=10`,
             ]
                 .map(endpoint => {
                     return {
@@ -274,9 +274,9 @@ describe('fanout', () => {
     it('should resolve faster response first when there are slower ones', async () => {
         await serverReady(async (port) => {
             const options = [
-                `http://localhost:${port}/?l=150`,
-                `http://localhost:${port}/?l=100`,
-                `http://localhost:${port}/?l=200`,
+                `http://localhost:${port}/?l=25`,
+                `http://localhost:${port}/?l=50`,
+                `http://localhost:${port}/?l=75`,
             ]
                 .map(endpoint => {
                     return {
@@ -305,7 +305,7 @@ describe('fanout', () => {
 
     it('should return the same formatted response body when its read more than once', async () => {
         await serverReady(async (port) => {
-            for (let response of fanout([{ url: `http://localhost:${port}/?l=100&eh=1` }])) {
+            for (let response of fanout([{ url: `http://localhost:${port}/?l=50&eh=1` }])) {
                 const res = await response
 
                 expect(res.statusCode).to.equal(200)
@@ -337,9 +337,9 @@ describe('fanout', () => {
     it('should resolve fastest response first when responses are raced', async () => {
         await serverReady(async (port) => {
             const options = [
-                `http://localhost:${port}/?l=300`,
                 `http://localhost:${port}/?l=100`,
-                `http://localhost:${port}/?l=200`,
+                `http://localhost:${port}/?l=25`,
+                `http://localhost:${port}/?l=75`,
             ]
                 .map(endpoint => {
                     return {
@@ -357,9 +357,9 @@ describe('fanout', () => {
     it('should resolve responses in order when they are raced', async () => {
         await serverReady(async (port) => {
             const options = [
-                `http://localhost:${port}/?l=200`,
                 `http://localhost:${port}/?l=100`,
-                `http://localhost:${port}/?l=150`,
+                `http://localhost:${port}/?l=25`,
+                `http://localhost:${port}/?l=50`,
             ]
                 .map(endpoint => {
                     return {
@@ -446,12 +446,12 @@ describe('fanout', () => {
     it('should call back with error when response timeout exceeded', (done) => {
         serverReady(async (port, _, __, done) => {
             const options = [
-                `http://localhost:${port}/?l=200`,
+                `http://localhost:${port}/?l=50`,
             ]
                 .map(endpoint => {
                     return {
                         url: endpoint,
-                        timeout: 100
+                        timeout: 25
                     }
                 })
 
