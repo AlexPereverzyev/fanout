@@ -1,6 +1,6 @@
 {
   "name": "fast-fanout",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Send HTTP request to multiple endpoints at once with minimal overhead",
   "main": "index.js",
   "scripts": {
